@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import { collection, addDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const Chat = ({ route, navigation, db }) => {
+const Chat = ({ route, navigation, db, isConnected }) => {
   // props defined in Start Component
   const { userID, background, screenRatio, username } = route.params;
   const [messages, setMessages] = useState([]);
@@ -25,26 +26,60 @@ const Chat = ({ route, navigation, db }) => {
       }}
     />
   }
- 
+
+  const renderInputToolbar = (props) => {
+    if (isConnected) return <InputToolbar {...props} />;
+    else return null;
+  }
+
   useEffect(() => {
     navigation.setOptions({ title: username });
+  }, []);
+
+  
+ 
+  let unsubMessages;
+  useEffect(() => {
+    if (isConnected === true) {
+      if (unsubMessages) unsubMessages();
+      unsubMessages = null;
+
+    
     const q = query(collection(db, "messages"), orderBy("createdAt", "desc"));
-    const unsubMessages = onSnapshot(q, (docs) => {
+    unsubMessages = onSnapshot(q, (docSnapshot) => {
       let newMessages = [];
-      docs.forEach((doc) => {
+      docSnapshot.forEach((doc) => {
         newMessages.push({
           id: doc.id,
           ...doc.data(),
           createdAt: new Date(doc.data().createdAt.toMillis()),
         });
       });
+      cachedMessages(newMessages);
       setMessages(newMessages);
     });
+  }else loadCachedMessages();
 
-    return () => {
-      if (unsubMessages) unsubMessages();
-    };
-  }, []);
+  return () => {
+    if (unsubMessages) unsubMessages();
+  };
+ 
+  }, [isConnected]);
+
+
+
+  const loadCachedMessages = async () => {
+    const cachedMessages = await AsyncStorage.getItem("chat_messages") || [];
+    setMessages(JSON.parse(cachedMessages));
+  }
+
+  const cachedMessages = async (listsToCache) => {
+    try {
+      await AsyncStorage.setItem('chat_messages', JSON.stringify(listsToCache));
+    } catch (error) {
+      console.log(error.message);
+    }
+  }
   
   
  return (
@@ -53,6 +88,7 @@ const Chat = ({ route, navigation, db }) => {
      <GiftedChat
        renderBubble={renderBubble}
        messages={messages}
+       renderInputToolbar={renderInputToolbar}
        onSend={messages => onSend(messages)}
        user={{
          _id: userID,
