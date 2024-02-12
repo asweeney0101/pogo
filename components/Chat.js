@@ -55,7 +55,7 @@ const Chat = ({ route, navigation, db, isConnected }) => {
           createdAt: new Date(doc.data().createdAt.toMillis()),
         });
       });
-      cachedMessages(newMessages);
+      cacheMessages(newMessages);
       setMessages(newMessages);
     });
   }else loadCachedMessages();
@@ -66,12 +66,20 @@ const Chat = ({ route, navigation, db, isConnected }) => {
  
   }, [isConnected]);
 
+  //Stores/Caches messages
+  const cacheMessages = async (messagesToCache) => {
+    try {
+      await AsyncStorage.setItem("chat_messages", JSON.stringify(messagesToCache));
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
-
+  //Loads cached messages
   const loadCachedMessages = async () => {
-    const cachedMessages = await AsyncStorage.getItem("chat_messages") || [];
-    setMessages(JSON.parse(cachedMessages));
-  }
+    const storedMessages = (await AsyncStorage.getItem("chat_messages")) || [];
+    setMessages(JSON.parse(storedMessages));
+  };
 
   const cachedMessages = async (listsToCache) => {
     try {
