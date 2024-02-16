@@ -1,9 +1,9 @@
 import { TouchableOpacity, StyleSheet, View, Text } from "react-native";
 import { useActionSheet } from '@expo/react-native-action-sheet';
 import * as Location from 'expo-location';
-import MapView from 'react-native-maps';
 
-const CustomActions = ({ wrapperStyle, iconTextStyle }) => {
+
+const CustomActions = ({ wrapperStyle, iconTextStyle, onSend }) => {
     const actionSheet = useActionSheet();
     const onActionPress = () => {
         const options = ['Choose From Library', 'Take Picture', 'Send Location', 'Cancel'];
@@ -29,6 +29,23 @@ const CustomActions = ({ wrapperStyle, iconTextStyle }) => {
         );
       };
 
+ 
+
+      const getLocation = async () => {
+        let permissions = await Location.requestForegroundPermissionsAsync();
+        if (permissions?.granted) {
+          const location = await Location.getCurrentPositionAsync({});
+          if (location) {
+            onSend({
+              location: {
+                longitude: location.coords.longitude,
+                latitude: location.coords.latitude,
+              },
+            });
+          } else Alert.alert("Error occurred while fetching location");
+        } else Alert.alert("Permissions haven't been granted.");
+      }
+    
 
     return (
         <TouchableOpacity style={styles.container} onPress={onActionPress}>

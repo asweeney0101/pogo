@@ -22,7 +22,7 @@ LogBox.ignoreLogs(["AsyncStorage has been extracted from", "@firebase/auth"]);
 export default function App() {
   // Used to check if app is online or offline
   const connectionStatus = useNetInfo();
-console.log(connectionStatus)
+
   useEffect(() => {
     if (connectionStatus.isConnected === false) {
       Alert.alert("Connection lost!");
