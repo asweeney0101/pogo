@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomActions from './CustomActions';
 import MapView from 'react-native-maps';
 
-const Chat = ({ route, navigation, db, isConnected }) => {
+const Chat = ({ route, navigation, db, isConnected, storage }) => {
   // props defined in Start Component
   const { userID, background, screenRatio, username } = route.params;
   const [messages, setMessages] = useState([]);
@@ -29,23 +29,16 @@ const Chat = ({ route, navigation, db, isConnected }) => {
     />
   }
 
-  const renderCustomActions = (props) => {
-    return <CustomActions {...props} />;
-  };
-
   const renderInputToolbar = (props) => {
     if (isConnected) return <InputToolbar {...props} />;
     else return null;
   }
-
-  useEffect(() => {
-    navigation.setOptions({ title: username });
-  }, []);
-
-  
  
   let unsubMessages;
+  
   useEffect(() => {
+    navigation.setOptions({ title: username });
+
     if (isConnected === true) {
       if (unsubMessages) unsubMessages();
       unsubMessages = null;
@@ -85,6 +78,10 @@ const Chat = ({ route, navigation, db, isConnected }) => {
   const loadCachedMessages = async () => {
     const storedMessages = (await AsyncStorage.getItem("chat_messages")) || [];
     setMessages(JSON.parse(storedMessages));
+  };
+
+  const renderCustomActions = (props) => {
+    return <CustomActions userID={userID} storage={storage} {...props} />;
   };
 
   const renderCustomView = (props) => {
