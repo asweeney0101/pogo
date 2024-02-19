@@ -23,9 +23,9 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
   const renderDraftPreview = () => {
     if (draftImageUri) {
       return (
-        <TouchableOpacity onPress={removeDraftImage} style={styles.draftPreviewContainer}>
+        <TouchableOpacity style={styles.draftPreviewContainer}>
           <Image source={{ uri: draftImageUri }} style={styles.draftPreviewImage} />
-          <Text style={styles.removeDraftButtonText}>X</Text>
+          <Text onPress={removeDraftImage} style={styles.removeDraftButtonText}>X</Text>
         </TouchableOpacity>
       );
     }
