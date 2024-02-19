@@ -5,7 +5,7 @@ import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from 'expo-image-picker';
 
 
-const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID }) => {
+const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID, onDraft }) => {
     const actionSheet = useActionSheet();
     const onActionPress = () => {
         const options = ['Choose From Library', 'Take Picture', 'Send Location', 'Cancel'];
@@ -58,9 +58,11 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
         let permissions = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (permissions?.granted) {
           let result = await ImagePicker.launchImageLibraryAsync();
-          if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
-          
-          else Alert.alert("Permissions haven't been granted.");
+          if (!result.canceled) { 
+            onDraft(result.assets[0].uri);
+          } else { 
+            Alert.alert("Permissions haven't been granted.") 
+          };
         }
       }
     
@@ -68,8 +70,10 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
         let permissions = await ImagePicker.requestCameraPermissionsAsync();
         if (permissions?.granted) {
           let result = await ImagePicker.launchCameraAsync();
-          if (!result.canceled) await uploadAndSendImage(result.assets[0].uri);
-          else Alert.alert("Permissions haven't been granted.");
+          if (!result.canceled) {
+            onDraft(result.assets[0].uri)
+          } else { Alert.alert("Permissions haven't been granted.");
+          }        
         }
       }
 
@@ -78,7 +82,7 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
         if (permissions?.granted) {
           const location = await Location.getCurrentPositionAsync({});
           if (location) {
-            onSend({
+            onDraft({
               location: {
                 longitude: location.coords.longitude,
                 latitude: location.coords.latitude,
@@ -123,5 +127,3 @@ const CustomActions = ({ wrapperStyle, iconTextStyle, onSend, storage, userID })
   
 
 export default CustomActions;
-
-

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Image, TouchableOpacity, Text } from 'react-native';
 import { GiftedChat, Bubble, InputToolbar } from "react-native-gifted-chat";
 import { collection, addDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,9 +10,39 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
   // props defined in Start Component
   const { userID, background, screenRatio, username } = route.params;
   const [messages, setMessages] = useState([]);
+  const [draftImageUri, setDraftImageUri] = useState(null);
+
+  const handleDraft = (uri) => {
+    setDraftImageUri(uri);
+  };
+
+  const removeDraftImage = () => {
+    setDraftImageUri(null);
+  };
+
+  const renderDraftPreview = () => {
+    if (draftImageUri) {
+      return (
+        <TouchableOpacity onPress={removeDraftImage} style={styles.draftPreviewContainer}>
+          <Image source={{ uri: draftImageUri }} style={styles.draftPreviewImage} />
+          <Text style={styles.removeDraftButtonText}>X</Text>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  };
 
   const onSend = (newMessages) => {
-    addDoc(collection(db, "messages"), newMessages[0]);
+    if (draftImageUri) {
+      const messageWithImage = {
+        ...newMessages[0],
+        image: draftImageUri, 
+      };
+      addDoc(collection(db, "messages"), messageWithImage);
+      setDraftImageUri(null);
+    } else {
+      addDoc(collection(db, "messages"), newMessages[0]);
+    }
   };
 
   const renderBubble = (props) => {
@@ -81,7 +111,7 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
   };
 
   const renderCustomActions = (props) => {
-    return <CustomActions userID={userID} storage={storage} {...props} />;
+    return <CustomActions onDraft={handleDraft} userID={userID} storage={storage} {...props} />;
   };
 
   const renderCustomView = (props) => {
@@ -108,8 +138,9 @@ const Chat = ({ route, navigation, db, isConnected, storage }) => {
 
   
  return (
-  <TouchableWithoutFeedback onPress={Keyboard.dismiss} style={styles.container}>
-  <KeyboardAvoidingView style={[styles.container, { backgroundColor: background }]}>
+<TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false} style={styles.container}>
+      <KeyboardAvoidingView style={[styles.container, { backgroundColor: background }]} behavior="padding">
+        {renderDraftPreview()} 
      <GiftedChat
        renderBubble={renderBubble}
        messages={messages}
@@ -134,6 +165,28 @@ const styles = StyleSheet.create({
     height: '100%',
     width: '100%'
   },
+  draftPreviewContainer: {
+    position: 'absolute',
+    bottom: 100, 
+    right: 10,
+    zIndex: 10, // Ensure it's above other elements
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  draftPreviewImage: {
+    width: 100, 
+    height: 100,
+    borderRadius: 10, 
+  },
+  removeDraftButtonText: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'red',
+    color: 'white',
+    paddingHorizontal: 5,
+    borderRadius: 15,
+  }
 
  });
 
